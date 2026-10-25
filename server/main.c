@@ -1,7 +1,7 @@
 #include "server_init.h"
 
 int main(void) {
-    start_server();
     create_directory();
+    start_server();
     return 0;
 }
