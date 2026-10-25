@@ -3,6 +3,9 @@
 
 void receive_message(SOCKET clientSocket) {
     char buffer[1024];
+    char command[1024];
+    int commandLength=0;
+
     while (1) {
         int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
 
@@ -15,5 +18,21 @@ void receive_message(SOCKET clientSocket) {
             break;
         }
         printf("Received %d bytes from client.\n", bytesReceived);
+
+        for (int i = 0; i < bytesReceived; i++) {
+            if (buffer[i] == '\n') {
+            command[commandLength] = '\0';
+            printf("Message receipt complete: %s\n", command);
+            commandLength = 0;
+            } 
+            else if (commandLength >= (int)sizeof(command) - 1){
+                printf("Error: Command too long.\n");
+                return;
+            }else{
+            command[commandLength] = buffer[i];
+            commandLength++;
+            }
+        }
+        
     }
 }
