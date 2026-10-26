@@ -7,7 +7,7 @@
 #include "receive_msg.h"
 
 void start_server(void) {
-
+    
 WSADATA wsaData;
 int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
 
@@ -35,7 +35,7 @@ serverAddress.sin_port = htons(8080);
     return;
 }
 
-if(bind(serverSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress))== SOCKET_ERROR){
+if(bind(serverSocket, (struct sockaddr *) &serverAddress, sizeof(serverAddress))== SOCKET_ERROR){
     printf("Bind failed: %d\n", WSAGetLastError());
     closesocket(serverSocket);
     WSACleanup();
@@ -60,7 +60,7 @@ while (1) {
         return;
         }
         receive_message(clientSocket);
-         closesocket(clientSocket);
+        closesocket(clientSocket);
     }
 }
 

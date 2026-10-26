@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "receive_msg.h"
 #include "parsing.h"
+#include "input_validation.h"
 
 void receive_message(SOCKET clientSocket) {
     char buffer[1024];
@@ -27,12 +28,20 @@ void receive_message(SOCKET clientSocket) {
         printf("Received %d bytes from client.\n", bytesReceived);
 
         for (int i = 0; i < bytesReceived; i++) {
+
+            if (buffer[i] == '\0') {
+                printf("Error: Null byte detected in command.\n");
+                return;
+            }
+
             if (buffer[i] == '\n') {
                 command[commandLength] = '\0';
 
                 printf("Message receipt complete: %s\n", command);
 
-                parse_command(command);
+                if (validate_input(command)) {
+                    parse_command(command);
+                }
 
                 commandLength = 0;
             }
