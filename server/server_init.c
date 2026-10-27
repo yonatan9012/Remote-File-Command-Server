@@ -2,9 +2,43 @@
 #include <direct.h>
 #include <sys/stat.h>
 #include <winsock2.h>
+#include <errno.h>
 #include <ws2tcpip.h>
 #include "server_init.h"
 #include "receive_msg.h"
+
+
+int create_directory(void) {
+    const char *path = "C:\\Users\\User\\Desktop\\filename";
+
+    struct _stat info;
+    int result = _stat(path, &info);
+
+    if (result == 0) {
+        if (info.st_mode & _S_IFDIR) {
+            printf("The server's working directory already exists.\n");
+            return 1;
+        }
+        else {
+            printf("Error: The path exists but is not a directory.\n");
+            return 0;
+        }
+    }
+    if (errno != ENOENT) {
+        printf("Error: Failed to check the server's working directory.\n");
+        return 0;
+    }
+    int mkdirResult = _mkdir(path);
+
+    if (mkdirResult == 0) {
+        printf("Directory created successfully.\n");
+        return 1;
+    }
+    printf("Error: Failed to create the server's working directory.\n");
+    return 0;
+}
+
+
 
 void start_server(void) {
     
@@ -61,22 +95,5 @@ while (1) {
         }
         receive_message(clientSocket);
         closesocket(clientSocket);
-    }
-}
-
-void create_directory(void){
-    struct _stat info;
-    int result = _stat("C:\\Users\\User\\Desktop\\filename", &info);
-    if (result == 0 && (info.st_mode & _S_IFDIR )){
-        printf("The server's working directory already exists.\n");
-    }
-    else {
-    int a = _mkdir ("C:\\Users\\User\\Desktop\\filename");
-        if(a==0){  
-            printf("Directory created successfully\n");
-        }
-        else{
-            printf("Error: Failed to create the server's working directory.\n");
-        }
     }
 }
