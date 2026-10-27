@@ -30,3 +30,18 @@ int validate_input(const char *command) {
 
     return 1;
 }
+
+
+
+
+
+
+    /* 
+    $client = [System.Net.Sockets.TcpClient]::new("127.0.0.1", 8080)
+$writer = [System.IO.StreamWriter]::new($client.GetStream())
+$writer.AutoFlush = $true
+$writer.WriteLine("CREATE test.txt")
+$writer.Dispose()
+$client.Close()
+    
+    */
