@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <io.h>
 #include "server_init.h"
 #include "file_handling.h"
 
@@ -50,9 +51,10 @@ void handle_create(const char *filename) {
         printf("Error: Failed to close file.\n");
         return;
     }
-
     printf("File created successfully.\n");
 }
+
+
 void handle_write(const char *filename, const char *content) {
     char path1[1200];
 
@@ -87,7 +89,7 @@ void handle_write(const char *filename, const char *content) {
     fclose(file);
     return;
     }
-    
+
     size_t a = fwrite(content, 1, strlen(content), file);
 
     if (strlen(content) != a) {
@@ -102,4 +104,56 @@ void handle_write(const char *filename, const char *content) {
     }
 
     printf("File written successfully.\n");
+}
+
+
+void handle_append (const char *filename, const char *content){
+    char path2 [1200];
+    if (build_file_path(filename, path2, sizeof(path2)) == 0) {
+        printf("Error: Cannot build file path.\n");
+        return;
+    }
+
+    FILE *file = fopen(path2, "r+");
+
+     if (file == NULL) {
+        printf("Error: Cannot open file.\n");
+        return;
+    }
+
+    if(fseek(file, 0, SEEK_END)!=0){
+        printf("Error: Cannot move to end of file.\n");
+        fclose(file);
+        return;
+    }
+
+    size_t a = fwrite(content, 1, strlen(content), file);
+    if (strlen(content) != a) {
+        printf("Error: Cannot append to file.\n");
+        fclose(file);
+        return;
+    }
+
+    if (fclose(file) != 0) {
+        printf("Error: Cannot close file.\n");
+        return;
+    }
+    printf("Content added successfully.\n");
+}
+
+
+void handle_delete (const char *filename){
+    char path_delete [500];
+
+    if (build_file_path(filename, path_delete, sizeof(path_delete)) == 0) {
+        printf("Error: Cannot build file path.\n");
+        return;
+    }
+    if ( remove(path_delete) !=0 ){
+        printf("ERROR: ");
+        return;
+    } 
+
+    printf("file delete successfully.\n");
+
 }
