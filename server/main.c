@@ -6,7 +6,8 @@ int main(void) {
         printf("Error: Server initialization failed.\n");
         return 1;
     }
-
     start_server();
+    
     return 0;
 }
+
