@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "command_validation.h"
+#include "command_execution.h"
 
 void validate_command (const char *operation, const char *fileName, const char *content){
     const char *allowCommand [] = {
@@ -108,4 +109,7 @@ void validate_command (const char *operation, const char *fileName, const char *
          printf("Error: File name.\n");
          return;
     }
+
+execute_command(operation, fileName, content);
+
 }
