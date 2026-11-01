@@ -3,13 +3,13 @@
 #include "parsing.h"
 #include "input_validation.h"
 
-void receive_message(SOCKET clientSocket) {
+void receive_message(SOCKET connectedSocket) {
     char buffer[1024];
     char command[1024];
     int commandLength = 0;
 
     while (1) {
-        int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
+        int bytesReceived = recv(connectedSocket, buffer, sizeof(buffer), 0);
 
         if (bytesReceived == 0) {
             if (commandLength > 0) {

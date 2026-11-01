@@ -57,7 +57,7 @@ if (serverSocket == INVALID_SOCKET) {
     WSACleanup();
     return;
 }
-printf("Socket created successfully.\n");
+printf("Socket to server created successfully.\n");
 
 struct sockaddr_in serverAddress={0};
 serverAddress.sin_family = AF_INET;
@@ -86,14 +86,14 @@ if(listen(serverSocket,5)==SOCKET_ERROR){
 printf("Server is listening on port 8080...\n");
 
 while (1) {
-    SOCKET clientSocket = accept (serverSocket , NULL , NULL);
-    if(clientSocket==INVALID_SOCKET){
+    SOCKET connectedSocket  = accept (serverSocket , NULL , NULL);
+    if(connectedSocket ==INVALID_SOCKET){
         printf("accept filed: %d\n", WSAGetLastError());
         closesocket(serverSocket);
         WSACleanup();
         return;
         }
-        receive_message(clientSocket);
-        closesocket(clientSocket);
+        receive_message(connectedSocket );
+        closesocket(connectedSocket );
     }
 }
