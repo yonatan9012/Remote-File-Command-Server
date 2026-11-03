@@ -2,6 +2,7 @@
 #include "receive_msg.h"
 #include "parsing.h"
 #include "input_validation.h"
+#include "send_response.h"
 
 void receive_message(SOCKET connectedSocket) {
     char buffer[1024];
@@ -13,9 +14,9 @@ void receive_message(SOCKET connectedSocket) {
 
         if (bytesReceived == 0) {
             if (commandLength > 0) {
-                printf("Error: Incomplete command received.\n");
+                send_response(connectedSocket,"Error: Incomplete command received.\n");
             } else {
-                printf("Client disconnected.\n");
+                send_response(connectedSocket,"Client disconnected.\n");
             }
             break;
         }
@@ -30,7 +31,7 @@ void receive_message(SOCKET connectedSocket) {
         for (int i = 0; i < bytesReceived; i++) {
 
             if (buffer[i] == '\0') {
-                printf("Error: Null byte detected in command.\n");
+                send_response(connectedSocket,"Error: Null byte detected in command.\n");
                 return;
             }
 
@@ -39,14 +40,14 @@ void receive_message(SOCKET connectedSocket) {
 
                 printf("Message receipt complete: %s\n", command);
 
-                if (validate_input(command)) {
+                if (validate_input(command,connectedSocket)) {
                     parse_command(command, connectedSocket);
                 }
 
                 commandLength = 0;
             }
             else if (commandLength >= (int)sizeof(command) - 1) {
-                printf("Error: Command too long.\n");
+                send_response(connectedSocket,"Error: Command too long.\n");
                 return;
             }
             else {
