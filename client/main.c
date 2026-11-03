@@ -31,6 +31,12 @@ int main(void) {
             break;
         }
 
+        if (strchr(inputclient, '\n')== NULL){
+            printf("Error: your input its to long.\n");
+            status = 1;
+            break;
+        }
+
         if (strcmp(inputclient, "EXIT\n") == 0) {
             printf("EXIT successfully\n");
             status = 0;
