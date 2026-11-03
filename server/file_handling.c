@@ -153,42 +153,57 @@ int handle_delete (const char *filename,SOCKET connectedSocket){
     return 1;
 }
 
-int handle_read(const char *filename, SOCKET connectedSocket ){
-    char buffer [1024];
-    char path_read [1024];
-    if (build_file_path(filename, path_read, sizeof(path_read))==0){
+
+int handle_read(const char *filename, SOCKET connectedSocket) {
+    char buffer[1024];
+    char path_read[1024];
+
+    if (build_file_path(filename, path_read, sizeof(path_read)) == 0) {
         send_response(connectedSocket, "Error: Cannot build file path.\n");
         return 0;
     }
 
-    FILE *file = fopen(path_read,"rb");
+    FILE *file = fopen(path_read, "rb");
 
-    if(file==NULL){
+    if (file == NULL) {
         send_response(connectedSocket, "Error: Cannot open file.\n");
         return 0;
     }
 
-    size_t bytesRead = fread(buffer, 1, sizeof(buffer) -2 , file);
-    buffer[bytesRead] = '\n';
-    buffer[bytesRead + 1] = '\0';
+    size_t bytesRead;
+    size_t totalBytesRead = 0;
 
-    if (ferror(file) != 0) {
-        send_response(connectedSocket,"Error reading the file.\n");
-        fclose(file);
-        return 0;
+    while ((bytesRead = fread(buffer, 1, sizeof(buffer) - 1, file)) > 0) {
+
+        buffer[bytesRead] = '\0';
+
+        if (send_response(connectedSocket, buffer) == 0) {
+            fclose(file);
+            return 0;
+        }
+
+        totalBytesRead += bytesRead;
     }
 
-    if (ferror(file) == 0 && bytesRead == 0) {
-        send_response(connectedSocket, "ERROR: No text to read.\n");
+    if (ferror(file)) {
         fclose(file);
+        send_response(connectedSocket, "\n");
         return 0;
     }
 
     if (fclose(file) != 0) {
-        send_response(connectedSocket, "Error: Cannot close file.\n");
+        send_response(connectedSocket, "\n");
         return 0;
     }
 
-    send_response(connectedSocket, buffer);
+    if (totalBytesRead == 0) {
+        send_response(connectedSocket, "ERROR: No text to read.\n");
+        return 0;
+    }
+
+    if (send_response(connectedSocket, "\n") == 0) {
+        return 0;
+    }
+
     return 1;
 }
