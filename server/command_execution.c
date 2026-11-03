@@ -2,26 +2,28 @@
 #include <string.h>
 #include "command_execution.h"
 #include "file_handling.h"
+#include "send_response.h"
 
-int execute_command(const char *operation, const char *fileName, const char *content) {
-
-    int result = 0;
+void execute_command(const char *operation, const char *fileName, const char *content,SOCKET connectedSocket) {
 
     if (strcmp(operation, "CREATE") == 0) {
-        result = handle_create(fileName);
+        handle_create(fileName, connectedSocket);
     }
 
     else if (strcmp(operation, "DELETE") == 0) {
-        result = handle_delete(fileName);
+        handle_delete(fileName,connectedSocket);
     }
 
     else if (strcmp(operation, "WRITE") == 0) {
-        result = handle_write(fileName , content);
+        handle_write(fileName , content,connectedSocket);
     }
 
     else if (strcmp(operation, "APPEND") == 0) {
-        result = handle_append(fileName , content);
+        handle_append(fileName , content,connectedSocket);
     }
 
-    return result;
+    else if (strcmp(operation, "READ") == 0) {
+        handle_read(fileName ,connectedSocket);
+    }
+    
 }

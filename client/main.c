@@ -14,6 +14,13 @@ int main(void) {
         return 1;
     }
     printf("Client connected successfully.\n");
+    printf("Available commands:\n"
+       "CREATE <filename>\n"
+       "READ   <filename>\n"
+       "WRITE  <filename> <content>\n"
+       "APPEND <filename> <content>\n"
+       "DELETE <filename>\n"
+       "EXIT   - Disconnect from server\n\n");
 
     while(1){
         printf("Enter command: ");

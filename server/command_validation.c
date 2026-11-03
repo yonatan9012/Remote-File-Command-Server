@@ -2,8 +2,9 @@
 #include <string.h>
 #include "command_validation.h"
 #include "command_execution.h"
+#include "send_response.h"
 
-void validate_command (const char *operation, const char *fileName, const char *content){
+int validate_command (const char *operation, const char *fileName, const char *content,SOCKET connectedSocket){
     const char *allowCommand [] = {
         "CREATE",
         "DELETE",
@@ -13,13 +14,13 @@ void validate_command (const char *operation, const char *fileName, const char *
     };
 
     if ((strcmp(operation, "CREATE") == 0 ||strcmp(operation, "DELETE") == 0 || strcmp(operation, "READ") == 0) && (fileName[0] == '\0' || content[0] != '\0')) {
-    printf("Error: Invalid CREATE, DELETE or READ arguments.\n");
-    return;
+        send_response(connectedSocket, "Error: Invalid CREATE, DELETE or READ arguments.\n");
+        return -1;
     }
 
     if ((strcmp (operation, "WRITE")==0 || strcmp(operation, "APPEND")==0) && (fileName[0]=='\0' || content[0] =='\0')){
-        printf("Error: Invalid WRITE or APPEND arguments.\n");
-        return;
+        send_response(connectedSocket, "Error: Invalid WRITE or APPEND arguments.\n");
+        return -1;
     }
 
     int found = 0;
@@ -31,8 +32,8 @@ void validate_command (const char *operation, const char *fileName, const char *
     }
 
     if (found == 0){
-        printf("Error: Unknown command.\n");
-        return;
+        send_response(connectedSocket, "Error: Unknown command.\n");
+        return -1;
     }
 
         int index = 0;
@@ -46,26 +47,17 @@ void validate_command (const char *operation, const char *fileName, const char *
             index ++;
         }
         if(hasText==0){
-            printf("Error: Content cannot be empty or contain only whitespace.\n");
-            return;
+            send_response(connectedSocket, "Error: Content cannot be empty or contain only whitespace.\n");
+            return -1;
         }
-    }
-
-    index = 0;
-    while (fileName[index] != '\0'){
-        if (fileName[index] == '\\' || fileName[index] == '/'){
-            printf("Error: File name contains invalid path separators.\n");
-            return;
-        }
-        index ++;
     }
 
     const char *invalidChars = "<>:\"/\\|?*";
     index =0;
     while (fileName[index] != '\0'){
         if (strchr(invalidChars, fileName[index])!=NULL){
-            printf("Error: File name contains invalid characters.\n");
-            return;
+            send_response(connectedSocket, "Error: File name contains invalid characters.\n");
+            return -1;
         }
         index ++;
     }
@@ -74,6 +66,11 @@ void validate_command (const char *operation, const char *fileName, const char *
     const char *reservedNames[] = {"CON","PRN","AUX","NUL","COM1","COM2","COM3","COM4","COM5",
     "COM6","COM7","COM8","COM9","LPT1","LPT2","LPT3","LPT4","LPT5","LPT6","LPT7","LPT8","LPT9"
     };
+
+    if (fileName[0] == '\0') {
+        send_response(connectedSocket, "Error: File name is required.\n");
+        return -1;
+    }
 
     index = 0;
 
@@ -86,16 +83,16 @@ void validate_command (const char *operation, const char *fileName, const char *
 
     for (int i = 0; i < 22; i++) {
         if (_stricmp(baseName, reservedNames[i]) == 0) {
-            printf("Error: Reserved file name.\n");
-            return;
+            send_response(connectedSocket, "Error: Reserved file name.\n");
+            return -1;
         }
     } 
     
     index = 0;
     while (fileName[index] != '\0'){
         if((unsigned char)fileName[index] < 32 ){
-            printf("Error: File name contains invalid control characters.\n");
-            return;
+            send_response(connectedSocket, "Error: File name contains invalid control characters.\n");
+            return -1;
         }
         index++;
     }
@@ -106,10 +103,10 @@ void validate_command (const char *operation, const char *fileName, const char *
     }
     index = index -1;
     if (fileName[index]==' ' || fileName[index]=='.'){
-         printf("Error: File name.\n");
-         return;
+        send_response(connectedSocket, "Error: File name.\n");
+        return -1;
     }
 
-execute_command(operation, fileName, content);
-
+    execute_command(operation, fileName, content, connectedSocket);
+    return 1;
 }

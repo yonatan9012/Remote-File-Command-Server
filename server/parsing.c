@@ -2,7 +2,7 @@
 #include "parsing.h"
 #include "command_validation.h"
 
-void parse_command(const char *command) {
+void parse_command(const char *command,SOCKET connectedSocket) {
     char operation[10];
     char fileName[50];
     char content[1024];
@@ -61,5 +61,5 @@ void parse_command(const char *command) {
     }
     content[count] = '\0';
 
-    validate_command(operation, fileName, content);
+    validate_command(operation, fileName, content, connectedSocket);
 }

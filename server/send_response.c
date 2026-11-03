@@ -10,7 +10,7 @@ int send_response(SOCKET connectedSocket, const char *message){
         int status = send(connectedSocket, message + totalSent, commandLength - totalSent, 0); 
 
         if (status <= 0){
-            printf("Error: Cannot send command.\n");
+            printf("Error: Cannot send response.\n");
             return 0;
         }
 

@@ -3,12 +3,7 @@
 #include <io.h>
 #include "server_init.h"
 #include "file_handling.h"
-
-void validate_filename(){
-
-     /*לבדוק האם לעשות את כל הבדיקות פה שוב או שניתן לשלוח מפה את זה לבדיקה חוזרת בקובץ של הוולידציה שאחרי הפארסינג */
-
-}
+#include "send_response.h"
 
 int build_file_path(const char *filename, char *fullPath, size_t fullPathSize) {
 
@@ -32,129 +27,168 @@ int build_file_path(const char *filename, char *fullPath, size_t fullPathSize) {
     return 1;
 }   
 
-int handle_create(const char *filename) {
+int handle_create(const char *filename, SOCKET connectedSocket) {
     char path[500];
 
     if (build_file_path(filename, path, sizeof(path)) == 0) {
-        printf("Error: Failed to build file path.\n");
+        send_response(connectedSocket,"Error: Failed to build file path.\n");
         return 0;
     }
 
     FILE *file = fopen(path, "wx");
 
     if (file == NULL) {
-    printf("Error: Failed to create file.\n");
-    return 0;
+        send_response(connectedSocket,"Error: Failed to create file.\n");
+        return 0;
     } 
 
     if (fclose(file) != 0) {
-        printf("Error: Failed to close file.\n");
+        send_response(connectedSocket,"Error: Failed to close file.\n");
         return 0;
     }
-    printf("File created successfully.\n");
+    
+    send_response(connectedSocket, "File created successfully.\n");
     return 1;
 }
 
 
-int handle_write(const char *filename, const char *content) {
+int handle_write(const char *filename, const char *content,SOCKET connectedSocket) {
     char path1[1200];
 
     if (build_file_path(filename, path1, sizeof(path1)) == 0) {
-        printf("Error: Cannot build file path.\n");
+        send_response(connectedSocket, "Error: Cannot build file path.\n");
         return 0;
     }
 
     FILE *file = fopen(path1, "r+");
 
     if (file == NULL) {
-        printf("Error: Cannot open file.\n");
+        send_response(connectedSocket, "Error: Cannot open file.\n");
         return 0;
     }
 
     int fd = _fileno(file);
     if (fd == -1){
-        printf("Error: Cannot get file descriptor.\n");
+        send_response(connectedSocket, "Error: Cannot get file descriptor.\n");
         fclose(file);
         return 0;
     }
     if(_chsize_s(fd, 0) != 0){
-        printf("Error: Cannot clear file.\n");
-         fclose(file);
+        send_response(connectedSocket, "Error: Cannot clear file.\n");
+        fclose(file);
         return 0;
     }
 
     if (fseek(file, 0, SEEK_SET) != 0) {
-    printf("Error: Cannot set file position.\n");
-    fclose(file);
-    return 0;
+        send_response(connectedSocket, "Error: Cannot set file position.\n");
+        fclose(file);
+        return 0;
     }
 
     size_t a = fwrite(content, 1, strlen(content), file);
 
     if (strlen(content) != a) {
-        printf("Error: Cannot write to file.\n");
+        send_response(connectedSocket, "Error: Cannot write to file.\n");
         fclose(file);
         return 0;
     }
 
     if (fclose(file) != 0) {
-        printf("Error: Cannot close file.\n");
+        send_response(connectedSocket, "Error: Cannot close file.\n");
         return 0;
     }
-
-    printf("File written successfully.\n");
+    send_response(connectedSocket,"File written successfully.\n");
     return 1;
 }
 
 
-int handle_append (const char *filename, const char *content){
+int handle_append (const char *filename, const char *content,SOCKET connectedSocket){
     char path2 [1200];
     if (build_file_path(filename, path2, sizeof(path2)) == 0) {
-        printf("Error: Cannot build file path.\n");
+        send_response(connectedSocket, "Error: Cannot build file path.\n");
         return 0;
     }
 
     FILE *file = fopen(path2, "r+");
 
      if (file == NULL) {
-        printf("Error: Cannot open file.\n");
+        send_response(connectedSocket, "Error: Cannot open file.\n");
         return 0;
     }
 
     if(fseek(file, 0, SEEK_END)!=0){
-        printf("Error: Cannot move to end of file.\n");
+        send_response(connectedSocket, "Error: Cannot move to end of file.\n");
         fclose(file);
         return 0;
     }
 
     size_t a = fwrite(content, 1, strlen(content), file);
     if (strlen(content) != a) {
-        printf("Error: Cannot append to file.\n");
+        send_response(connectedSocket, "Error: Cannot append to file.\n");
         fclose(file);
         return 0;
     }
 
     if (fclose(file) != 0) {
-        printf("Error: Cannot close file.\n");
+        send_response(connectedSocket, "Error: Cannot close file.\n");
         return 0;
     }
-    printf("Content added successfully.\n");
+    send_response(connectedSocket,"Content added successfully.\n");
     return 1;
 }
 
 
-int handle_delete (const char *filename){
+int handle_delete (const char *filename,SOCKET connectedSocket){
     char path_delete [500];
 
     if (build_file_path(filename, path_delete, sizeof(path_delete)) == 0) {
-        printf("Error: Cannot build file path.\n");
+        send_response(connectedSocket, "Error: Cannot build file path.\n");
         return 0;
     }
     if ( remove(path_delete) !=0 ){
-        printf("Error: Cannot delete file.\n");
+        send_response(connectedSocket, "Error: Cannot delete file.\n");
         return 0;
     } 
+    send_response(connectedSocket,"File deleted successfully.\n");
+    return 1;
+}
 
-    printf("File deleted successfully.\n");
+int handle_read(const char *filename, SOCKET connectedSocket ){
+    char buffer [1024];
+    char path_read [1024];
+    if (build_file_path(filename, path_read, sizeof(path_read))==0){
+        send_response(connectedSocket, "Error: Cannot build file path.\n");
+        return 0;
+    }
+
+    FILE *file = fopen(path_read,"rb");
+
+    if(file==NULL){
+        send_response(connectedSocket, "Error: Cannot open file.\n");
+        return 0;
+    }
+
+    size_t bytesRead = fread(buffer, 1, sizeof(buffer) -2 , file);
+    buffer[bytesRead] = '\n';
+    buffer[bytesRead + 1] = '\0';
+
+    if (ferror(file) != 0) {
+        send_response(connectedSocket,"Error reading the file.\n");
+        fclose(file);
+        return 0;
+    }
+
+    if (ferror(file) == 0 && bytesRead == 0) {
+        send_response(connectedSocket, "ERROR: No text to read.\n");
+        fclose(file);
+        return 0;
+    }
+
+    if (fclose(file) != 0) {
+        send_response(connectedSocket, "Error: Cannot close file.\n");
+        return 0;
+    }
+
+    send_response(connectedSocket, buffer);
     return 1;
 }

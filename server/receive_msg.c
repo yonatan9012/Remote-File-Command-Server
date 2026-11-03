@@ -40,7 +40,7 @@ void receive_message(SOCKET connectedSocket) {
                 printf("Message receipt complete: %s\n", command);
 
                 if (validate_input(command)) {
-                    parse_command(command);
+                    parse_command(command, connectedSocket);
                 }
 
                 commandLength = 0;

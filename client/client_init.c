@@ -21,8 +21,6 @@ SOCKET init_client(void) {
         return INVALID_SOCKET;
     }
 
-    printf("Client socket created successfully.\n");
-
     struct sockaddr_in serverAddress = {0};
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(8080);
