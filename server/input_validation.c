@@ -13,8 +13,7 @@ int validate_input(const char *command, SOCKET connectedSocket) {
 
     for (int i = 0; command[i] != '\0'; i++) {
 
-        if (command[i] == '\r' || 
-            (unsigned char)command[i] < 32 && command[i] != '\t') {
+        if ((unsigned char)command[i] < 32 && command[i] != '\t') {
                 send_response(connectedSocket, "Error: Invalid input.\n");
                 return 0;
             }
