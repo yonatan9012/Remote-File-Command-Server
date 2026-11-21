@@ -1,7 +1,12 @@
+
 #include <stdio.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+
 #include "receive_response.h"
 
-int receive_response(SOCKET clientSocket) {
+int receive_response(int clientSocket) {
     char buffer[1024];
     size_t index = 0;
 
@@ -13,15 +18,19 @@ int receive_response(SOCKET clientSocket) {
             index = 0;
         }
 
-        int bytesReceived = recv(clientSocket, &buffer[index], 1, 0);
+        ssize_t bytesReceived = recv(clientSocket, &buffer[index], 1, 0);
 
         if (bytesReceived == 0) {
             printf("Error: Server disconnected!\n");
             return 0;
         }
 
-        if (bytesReceived == SOCKET_ERROR) {
-            printf("Error: Cannot receive response from server!\n");
+        if (bytesReceived == -1) {
+            if (errno == EINTR) {
+                continue;
+            }
+
+            perror("Error: Cannot receive response from server");
             return 0;
         }
 
@@ -33,6 +42,4 @@ int receive_response(SOCKET clientSocket) {
 
         index++;
     }
-
 }
-           

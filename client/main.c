@@ -1,28 +1,32 @@
+
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+
 #include "client_init.h"
 #include "send_command.h"
 #include "receive_response.h"
 
 int main(void) {
-    SOCKET clientSocket = init_client();
-    char inputclient [1024];
+    int clientSocket = init_client();
+    char inputclient[1024];
     int status = 0;
 
-    if (clientSocket == INVALID_SOCKET) {
+    if (clientSocket == -1) {
         printf("Error: Client initialization failed.\n");
         return 1;
     }
+
     printf("Client connected successfully.\n");
     printf("Available commands:\n"
-       "CREATE <filename>\n"
-       "READ   <filename>\n"
-       "WRITE  <filename> <content>\n"
-       "APPEND <filename> <content>\n"
-       "DELETE <filename>\n"
-       "EXIT   - Disconnect from server\n\n");
+           "CREATE <filename>\n"
+           "READ   <filename>\n"
+           "WRITE  <filename> <content>\n"
+           "APPEND <filename> <content>\n"
+           "DELETE <filename>\n"
+           "EXIT   - Disconnect from server\n\n");
 
-    while(1){
+    while (1) {
         printf("Enter command: ");
 
         if (fgets(inputclient, sizeof(inputclient), stdin) == NULL) {
@@ -31,7 +35,7 @@ int main(void) {
             break;
         }
 
-        if (strchr(inputclient, '\n')== NULL){
+        if (strchr(inputclient, '\n') == NULL) {
             printf("Error: your input its to long.\n");
             status = 1;
             break;
@@ -48,15 +52,13 @@ int main(void) {
             status = 1;
             break;
         }
-    
+
         if (receive_response(clientSocket) == 0) {
             status = 1;
             break;
         }
-    
     }
-   
-    closesocket(clientSocket);
-    WSACleanup();
+
+    close(clientSocket);
     return status;
 }

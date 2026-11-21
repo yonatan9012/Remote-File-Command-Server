@@ -1,43 +1,38 @@
+
 #include <stdio.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include "client_init.h"
 
-SOCKET init_client(void) {
-    WSADATA wsaData;
+int init_client(void) {
 
-    int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    int clientSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-    if (result != 0) {
-        printf("WSAStartup failed: %d\n", result);
-        return INVALID_SOCKET;
-    }
-
-    SOCKET clientSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-
-    if (clientSocket == INVALID_SOCKET) {
-        printf("Socket creation failed: %d\n", WSAGetLastError());
-        WSACleanup();
-        return INVALID_SOCKET;
+    if (clientSocket == -1) {
+        perror("Socket creation failed");
+        return -1;
     }
 
     struct sockaddr_in serverAddress = {0};
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(8080);
 
-    if (InetPtonA(AF_INET, "127.0.0.1", &serverAddress.sin_addr) != 1) {
+    if (inet_pton(AF_INET, "127.0.0.1", &serverAddress.sin_addr) != 1) {
         printf("Invalid IP address.\n");
-        closesocket(clientSocket);
-        WSACleanup();
-        return INVALID_SOCKET;
+        close(clientSocket);
+        return -1;
     }
 
-    if (connect(clientSocket, (struct sockaddr *)&serverAddress,
-                sizeof(serverAddress)) == SOCKET_ERROR) {
-        printf("Connection failed: %d\n", WSAGetLastError());
-        closesocket(clientSocket);
-        WSACleanup();
-        return INVALID_SOCKET;
+    if (connect(clientSocket,
+                (struct sockaddr *)&serverAddress,
+                sizeof(serverAddress)) == -1) {
+
+        perror("Connection failed");
+        close(clientSocket);
+        return -1;
     }
 
     printf("Connected to server successfully.\n");
