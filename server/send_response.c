@@ -1,21 +1,38 @@
+
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+
 #include "send_response.h"
 
-int send_response(SOCKET connectedSocket, const char *message){
-    int totalSent = 0;
-    int commandLength = strlen(message);
+int send_response(int connectedSocket, const char *message) {
+    size_t totalSent = 0;
+    size_t commandLength = strlen(message);
 
-    while (totalSent < commandLength){
-        int status = send(connectedSocket, message + totalSent, commandLength - totalSent, 0); 
+    while (totalSent < commandLength) {
+        ssize_t status = send(connectedSocket,
+                              message + totalSent,
+                              commandLength - totalSent,
+                              MSG_NOSIGNAL);
 
-        if (status <= 0){
-            printf("Error: Cannot send response.\n");
+        if (status == -1) {
+            if (errno == EINTR) {
+                continue;
+            }
+
+            perror("Error: Cannot send response");
             return 0;
         }
 
-        totalSent = status + totalSent;
-    }
-    return 1;
+        if (status == 0) {
+            printf("Error: No data was sent.\n");
+            return 0;
+        }
 
+        totalSent += (size_t)status;
+    }
+
+    return 1;
 }

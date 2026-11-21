@@ -1,21 +1,24 @@
+
 #include <stdio.h>
-#include <direct.h>
 #include <sys/stat.h>
-#include <winsock2.h>
 #include <errno.h>
-#include <ws2tcpip.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include "server_init.h"
 #include "receive_msg.h"
 
 
 int create_directory(void) {
-    const char *path = "C:\\Users\\User\\Desktop\\filename";
+    const char *path = SERVER_DIRECTORY;
 
-    struct _stat info;
-    int result = _stat(path, &info);
+    struct stat info;
+    int result = stat(path, &info);
 
     if (result == 0) {
-        if (info.st_mode & _S_IFDIR) {
+        if (S_ISDIR(info.st_mode)) {
             printf("The server's working directory already exists.\n");
             return 1;
         }
@@ -24,76 +27,80 @@ int create_directory(void) {
             return 0;
         }
     }
+
     if (errno != ENOENT) {
-        printf("Error: Failed to check the server's working directory.\n");
+        perror("Failed to check the server's working directory");
         return 0;
     }
-    int mkdirResult = _mkdir(path);
+
+    int mkdirResult = mkdir(path, 0755);
 
     if (mkdirResult == 0) {
         printf("Directory created successfully.\n");
         return 1;
     }
-    printf("Error: Failed to create the server's working directory.\n");
+
+    perror("Failed to create the server's working directory");
     return 0;
 }
 
 
-
 void start_server(void) {
-    
-WSADATA wsaData;
-int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
 
-if (result != 0) {
-    printf("WSAStartup failed: %d\n", result);
-    return;
-}
+    int serverSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-SOCKET serverSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-
-if (serverSocket == INVALID_SOCKET) {
-    printf("Socket creation failed: %d\n", WSAGetLastError());
-    WSACleanup();
-    return;
-}
-printf("Socket to server created successfully.\n");
-
-struct sockaddr_in serverAddress={0};
-serverAddress.sin_family = AF_INET;
-serverAddress.sin_port = htons(8080);
- if(InetPtonA(AF_INET, "127.0.0.1", &serverAddress.sin_addr)!=1){
-    printf("Invalid IP address or conversion failed.\n");
-    closesocket(serverSocket);
-    WSACleanup();
-    return;
-}
-
-if(bind(serverSocket, (struct sockaddr *) &serverAddress, sizeof(serverAddress))== SOCKET_ERROR){
-    printf("Bind failed: %d\n", WSAGetLastError());
-    closesocket(serverSocket);
-    WSACleanup();
-    return;
-}
-
-if(listen(serverSocket,5)==SOCKET_ERROR){
-     printf("listen failed: %d\n", WSAGetLastError());
-     closesocket(serverSocket);
-     WSACleanup();
-     return;
-}
-
-printf("Server is listening on port 8080...\n");
-
-while (1) {
-    SOCKET connectedSocket  = accept (serverSocket , NULL , NULL);
-    if(connectedSocket ==INVALID_SOCKET){
-        printf("accept filed: %d\n", WSAGetLastError());
-        closesocket(serverSocket);
-        WSACleanup();
+    if (serverSocket == -1) {
+        perror("Socket creation failed");
         return;
+    }
+
+    printf("Socket to server created successfully.\n");
+
+    struct sockaddr_in serverAddress = {0};
+
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_port = htons(8080);
+
+    if (inet_pton(AF_INET, "127.0.0.1",
+                  &serverAddress.sin_addr) != 1) {
+        printf("Invalid IP address or conversion failed.\n");
+        close(serverSocket);
+        return;
+    }
+
+    if (bind(serverSocket,
+             (struct sockaddr *)&serverAddress,
+             sizeof(serverAddress)) == -1) {
+
+        perror("Bind failed");
+        close(serverSocket);
+        return;
+    }
+
+    if (listen(serverSocket, 5) == -1) {
+        perror("Listen failed");
+        close(serverSocket);
+        return;
+    }
+
+    printf("Server is listening on port 8080...\n");
+
+    while (1) {
+
+        int connectedSocket = accept(serverSocket, NULL, NULL);
+
+        if (connectedSocket == -1) {
+            if (errno == EINTR) {
+                continue;
+            }
+
+            perror("Accept failed");
+            close(serverSocket);
+            return;
         }
-        receive_message(connectedSocket );
-        closesocket(connectedSocket );
+
+        receive_message(connectedSocket);
+
+        close(connectedSocket);
     }
 }

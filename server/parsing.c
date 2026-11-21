@@ -1,14 +1,18 @@
+
 #include <stdio.h>
+#include <stddef.h>
+
 #include "parsing.h"
 #include "command_validation.h"
 #include "send_response.h"
 
-void parse_command(const char *command,SOCKET connectedSocket) {
+void parse_command(const char *command, int connectedSocket) {
     char operation[10];
     char fileName[50];
     char content[1024];
-    int index = 0;
-    int count = 0;
+    size_t index = 0;
+    size_t count = 0;
+
     while (command[index] != '\0') {
         if (command[index] == ' ') {
             index++;
@@ -27,19 +31,21 @@ void parse_command(const char *command,SOCKET connectedSocket) {
     operation[count] = '\0';
     count = 0;
 
-    while (command[index]==' '){
-        index ++;
+    while (command[index] == ' ') {
+        index++;
     }
-    
+
     while (command[index] != '\0') {
         if (command[index] == ' ') {
             index++;
             break;
         }
+
         if (count >= sizeof(fileName) - 1) {
             send_response(connectedSocket, "Parsing Error: File name exceeds the maximum allowed length.\n");
             return;
         }
+
         fileName[count] = command[index];
         index++;
         count++;
@@ -48,11 +54,11 @@ void parse_command(const char *command,SOCKET connectedSocket) {
     count = 0;
 
     while (command[index] != '\0') {
-
         if (count >= sizeof(content) - 1) {
             send_response(connectedSocket, "Parsing Error: Content exceeds the maximum allowed length.\n");
             return;
         }
+
         content[count] = command[index];
         index++;
         count++;
