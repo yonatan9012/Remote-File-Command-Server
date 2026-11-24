@@ -1,6 +1,4 @@
-
 #include <stdio.h>
-#include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -11,7 +9,6 @@ int receive_response(int clientSocket) {
     size_t index = 0;
 
     while (1) {
-
         if (index >= sizeof(buffer) - 1) {
             buffer[index] = '\0';
             printf("%s", buffer);
@@ -22,22 +19,18 @@ int receive_response(int clientSocket) {
 
         if (bytesReceived == 0) {
             printf("Error: Server disconnected!\n");
-            return 0;
+            return 1;
         }
 
         if (bytesReceived == -1) {
-            if (errno == EINTR) {
-                continue;
-            }
-
             perror("Error: Cannot receive response from server");
-            return 0;
+            return 1;
         }
 
         if (buffer[index] == '\n') {
             buffer[index] = '\0';
             printf("%s\n", buffer);
-            return 1;
+            return 0;
         }
 
         index++;

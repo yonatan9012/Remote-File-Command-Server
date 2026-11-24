@@ -12,27 +12,20 @@ int send_response(int connectedSocket, const char *message) {
     size_t commandLength = strlen(message);
 
     while (totalSent < commandLength) {
-        ssize_t status = send(connectedSocket,
-                              message + totalSent,
-                              commandLength - totalSent,
-                              MSG_NOSIGNAL);
+        ssize_t status = send(connectedSocket,message + totalSent,commandLength - totalSent,0);
 
         if (status == -1) {
-            if (errno == EINTR) {
-                continue;
-            }
-
             perror("Error: Cannot send response");
-            return 0;
+            return 1;
         }
 
         if (status == 0) {
             printf("Error: No data was sent.\n");
-            return 0;
+            return 1;
         }
 
         totalSent += (size_t)status;
     }
 
-    return 1;
+    return 0;
 }

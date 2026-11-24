@@ -35,25 +35,25 @@ int main(void) {
             break;
         }
 
-        if (strchr(inputclient, '\n') == NULL) {
+        if (strchr(inputclient, '\n') == NULL) { // בדיקה שקיים n 
             printf("Error: your input its to long.\n");
             status = 1;
             break;
         }
 
-        if (strcmp(inputclient, "EXIT\n") == 0) {
+        if (strcmp(inputclient, "EXIT\n") == 0) { // השוואה בין שני מחרוזות
             printf("EXIT successfully\n");
             status = 0;
             break;
         }
 
-        if (send_command(clientSocket, inputclient) == 0) {
+        if (send_command(clientSocket, inputclient) != 0) {
             printf("Error: Cannot send command.\n");
             status = 1;
             break;
         }
 
-        if (receive_response(clientSocket) == 0) {
+        if (receive_response(clientSocket) != 0) {
             status = 1;
             break;
         }

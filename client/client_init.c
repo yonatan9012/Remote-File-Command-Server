@@ -26,10 +26,7 @@ int init_client(void) {
         return -1;
     }
 
-    if (connect(clientSocket,
-                (struct sockaddr *)&serverAddress,
-                sizeof(serverAddress)) == -1) {
-
+    if (connect(clientSocket,(struct sockaddr *)&serverAddress,sizeof(serverAddress)) == -1) {
         perror("Connection failed");
         close(clientSocket);
         return -1;

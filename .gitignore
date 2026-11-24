@@ -4,4 +4,6 @@
 *.obj
 
 # VS Code temporary files
-.vscode/
+.vscode/client_app
+server_app
+client_app

@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include "input_validation.h"
 #include "send_response.h"
@@ -9,14 +8,14 @@ int validate_input(const char *command, int connectedSocket) {
     if (command[0] == '\0') {
         send_response(connectedSocket, "Error: Invalid input.\n");
         printf("Error: Invalid input.\n");
-        return 0;
+        return 1;
     }
 
     for (int i = 0; command[i] != '\0'; i++) {
 
         if ((unsigned char)command[i] < 32 && command[i] != '\t') {
             send_response(connectedSocket, "Error: Invalid input.\n");
-            return 0;
+            return 1;
         }
 
         if (command[i] != ' ' && command[i] != '\t') {
@@ -26,8 +25,8 @@ int validate_input(const char *command, int connectedSocket) {
 
     if (hasContent == 0) {
         send_response(connectedSocket, "Error: Invalid input.\n");
-        return 0;
+        return 1;
     }
 
-    return 1;
+    return 0;
 }

@@ -17,31 +17,30 @@ int create_directory(void) {
     struct stat info;
     int result = stat(path, &info);
 
+    if (result == 0 && !S_ISDIR(info.st_mode)) {
+        printf("Error: The path exists but is not a directory.\n");
+        return 1;
+    }
+    
     if (result == 0) {
-        if (S_ISDIR(info.st_mode)) {
-            printf("The server's working directory already exists.\n");
-            return 1;
-        }
-        else {
-            printf("Error: The path exists but is not a directory.\n");
-            return 0;
-        }
+        printf("The server's working directory already exists.\n");
+        return 0;
     }
 
     if (errno != ENOENT) {
-        perror("Failed to check the server's working directory");
-        return 0;
+        perror("Failed to check the server's working directory:");
+        return 1;
     }
 
     int mkdirResult = mkdir(path, 0755);
 
     if (mkdirResult == 0) {
         printf("Directory created successfully.\n");
-        return 1;
+        return 0;
     }
 
     perror("Failed to create the server's working directory");
-    return 0;
+    return 1;
 }
 
 
@@ -61,17 +60,13 @@ void start_server(void) {
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(8080);
 
-    if (inet_pton(AF_INET, "127.0.0.1",
-                  &serverAddress.sin_addr) != 1) {
+    if (inet_pton(AF_INET, "127.0.0.1",&serverAddress.sin_addr) != 1) {
         printf("Invalid IP address or conversion failed.\n");
         close(serverSocket);
         return;
     }
 
-    if (bind(serverSocket,
-             (struct sockaddr *)&serverAddress,
-             sizeof(serverAddress)) == -1) {
-
+    if (bind(serverSocket,(struct sockaddr *)&serverAddress,sizeof(serverAddress)) == -1) {
         perror("Bind failed");
         close(serverSocket);
         return;
@@ -88,12 +83,8 @@ void start_server(void) {
     while (1) {
 
         int connectedSocket = accept(serverSocket, NULL, NULL);
-
+        
         if (connectedSocket == -1) {
-            if (errno == EINTR) {
-                continue;
-            }
-
             perror("Accept failed");
             close(serverSocket);
             return;
